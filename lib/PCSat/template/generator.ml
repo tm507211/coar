@@ -1010,8 +1010,6 @@ let gen_int_fun quals terms
     match ret with
     | None -> exp_x
     | Some (v, s) ->
-      (* print_endline @@ (sprintf "[%s] quals:\n" (Ident.name_of_tvar @@ v) ^
-         String.concat_map_list ~sep:"\n" ret_quals ~f:Formula.str_of); *)
       let ts =
         List.filter_mapi ret_quals
           ~f:(fun i phi ->
@@ -1034,6 +1032,11 @@ let gen_int_fun quals terms
   in
   if nd <= 0 then 
     let exp_x = gen_expr 0 (T_int.zero ()) in
+    let exp_x =
+      match ret with
+      | Some (_, (T_array.SArray (s, T_int.SInt))) -> T_array.mk_const_array s T_int.SInt exp_x
+      | _ -> exp_x
+    in
     let temp_params =
       Map.of_set_exn @@ Set.Poly.map ~f:Logic.ExtTerm.of_old_sort_bind @@
       Set.Poly.union_list [expr_params_map;]
@@ -1074,6 +1077,11 @@ let gen_int_fun quals terms
               ( Formula.and_of @@
                 hole_term :: List.init nc ~f:(fun j -> Formula.geq (d_x i j) (T_int.zero ())) )
               (gen_expr i t1) t2)
+    in
+    let exp_x =
+      match ret with
+      | Some (_, (T_array.SArray (s, T_int.SInt))) -> T_array.mk_const_array s T_int.SInt exp_x
+      | _ -> exp_x
     in
     let expr_pos_neg_map, expr_coeffs_bounds =
       let expr_pos_neg_maps, phis =

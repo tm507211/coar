@@ -59,7 +59,11 @@ module Make (RLCfg: RLConfig.ConfigType) (Cfg: Config.ConfigType) (APCSP: PCSP.P
   let check_clause_nonparam_smt ?(timeout=None) fenv phi =
     let phi = Evaluator.simplify @@ LogicOld.Formula.mk_neg phi in
     Debug.print @@ lazy (sprintf "[check valid -> sat] %s" @@ LogicOld.Formula.str_of phi);
-    Z3Smt.Z3interface.check_sat ~id ~timeout fenv [ phi ]
+    let ans =
+      Z3Smt.Z3interface.check_sat ~id ~timeout fenv [ phi ]
+    in
+    ans
+
 
   let check_clause_param_smt ?(timeout=None) fenv params_senv uni_senv phi =
     let usenv = Map.Poly.to_alist @@ Logic.to_old_sort_env_map Logic.ExtTerm.to_old_sort uni_senv in
@@ -124,6 +128,7 @@ module Make (RLCfg: RLConfig.ConfigType) (Cfg: Config.ConfigType) (APCSP: PCSP.P
 
   let find_all_counterexamples clauses fenv ((params_senv, cand) : CandSol.t) =
     let cand_map = CandSol.to_subst (params_senv, cand) in
+    Debug.print @@ lazy (sprintf "Check clause: %s" @@ CandSol.str_of (params_senv, cand));
     let cls_nonparam, cls_param =
       Set.Poly.partition_tf ~f:(fun ((_, _, params_senv, _, _), _) ->
           Map.Poly.is_empty params_senv) @@
@@ -134,6 +139,7 @@ module Make (RLCfg: RLConfig.ConfigType) (Cfg: Config.ConfigType) (APCSP: PCSP.P
             Logic.ExtTerm.to_old_formula Map.Poly.empty
               (Map.force_merge params_senv uni_senv)
               (Logic.Term.subst cand_map clause) [] in
+          Debug.print @@ lazy (sprintf "CHECK Clause: %s" @@ LogicOld.Formula.str_of phi);
           let fvs = LogicOld.Formula.tvs_of phi in
           let uni_senv' = Map.Poly.filter_keys uni_senv ~f:(Set.Poly.mem fvs) in
           let params_senv' = Map.Poly.filter_keys params_senv ~f:(Set.Poly.mem fvs) in

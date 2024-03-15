@@ -177,7 +177,7 @@ module Make (RLCfg : RLConfig.ConfigType) (Cfg : Config.ConfigType) (APCSP: PCSP
         let module M = struct
           let name = tvar
           let sorts = sorts
-          let dtenv = PCSP.Problem.dtenv_of APCSP.problem
+          let dtenv = PCSP.Problem.dtenv_of_def APCSP.problem
           let fenv = PCSP.Problem.fenv_of APCSP.problem
           let sol_space = PCSP.Problem.sol_space_of APCSP.problem
           let id = id
@@ -239,7 +239,7 @@ module Make (RLCfg : RLConfig.ConfigType) (Cfg : Config.ConfigType) (APCSP: PCSP
             let public_name = public_name
             let parameter_sorts = parameter_sorts
             let tag_infos = tag_infos
-            let dtenv = PCSP.Problem.dtenv_of APCSP.problem
+            let dtenv = PCSP.Problem.dtenv_of_def APCSP.problem
             let fenv = PCSP.Problem.fenv_of APCSP.problem
             let id = id
           end in
@@ -440,14 +440,14 @@ module Make (RLCfg : RLConfig.ConfigType) (Cfg : Config.ConfigType) (APCSP: PCSP
   let create_smt_instance () =
     let ctx =  Z3.mk_context [("model", "true"); ("unsat_core", "true")](*dummy*) in
     let solver = Z3.Solver.mk_solver ctx None(*dummy*) in
-    let z3dtenv = Z3Smt.Z3interface.z3_dtenv_of_dtenv ctx @@ PCSP.Problem.dtenv_of APCSP.problem in
+    let z3dtenv = Z3Smt.Z3interface.z3_dtenv_of_dtenv ctx @@ PCSP.Problem.dtenv_of_def APCSP.problem in
     let z3fenv = Z3Smt.Z3interface.z3_fenv_of ctx [] [] (Atomic.get LogicOld.ref_fenv) z3dtenv in
     let smt_timeout = config.smt_timeout in
     { ctx; solver; z3dtenv; z3fenv; smt_timeout }
 
   let recreate_smt_instance instance =
     let ctx = Z3.mk_context [("model", "true"); ("unsat_core", "true")](*dummy*) in
-    let z3dtenv = Z3Smt.Z3interface.z3_dtenv_of_dtenv ctx @@ PCSP.Problem.dtenv_of APCSP.problem in
+    let z3dtenv = Z3Smt.Z3interface.z3_dtenv_of_dtenv ctx @@ PCSP.Problem.dtenv_of_def APCSP.problem in
     let z3fenv = Z3Smt.Z3interface.z3_fenv_of ctx [] [] (Atomic.get LogicOld.ref_fenv) z3dtenv in
     instance.ctx <- ctx;
     instance.solver <- Z3.Solver.mk_solver ctx None(*dummy*);

@@ -35,6 +35,7 @@ val formula_of : ?full_clauses:bool -> t -> term
 val senv_of : t -> sort_env_map
 val kind_map_of : t -> Kind.kind_map
 val dtenv_of : t -> LogicOld.DTEnv.t
+val dtenv_of_def : t -> LogicOld.DTEnv.t
 val fenv_of : t -> LogicOld.FunEnv.t
 val messenger_of : t -> Common.Messenger.t option
 val sol_for_eliminated_of : t -> term_subst_map

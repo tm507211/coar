@@ -575,6 +575,7 @@ module Make (Config: Config.ConfigType) = struct
   module CheckAndReplaceToTopOrBot : sig
     val optimize: is_print_for_debug:bool -> Problem.t -> Problem.t
   end = struct
+    (*
     let bind_free_tvas_with_forall fml =
       let ftv = Formula.tvs_of fml in
       let bounds =
@@ -588,7 +589,7 @@ module Make (Config: Config.ConfigType) = struct
       let options = ["timeout", string_of_int timeout_milliseconds] in
       let ctx = Z3.mk_context options in
       let solver = Z3.Solver.mk_simple_solver ctx in
-      solver, ctx
+      solver, ctx *)
 
     let check_always_true ?(timeout_milliseconds=1000) ~is_print_for_debug fml =
       let fpv = Formula.pvs_of fml in
@@ -600,12 +601,18 @@ module Make (Config: Config.ConfigType) = struct
           Debug.print @@ lazy "[optimize][check_always_true]";
           Debug.print @@ lazy (Printf.sprintf "input: %s" (Formula.str_of fml));
         );
+        ignore timeout_milliseconds;
+        false
+(*
         (* x >= 10 -> forall (x: int). x >= 10 *)
+        Format.printf "BEFORE BIND FVS: %s\n" (Formula.str_of fml);
         let fml = bind_free_tvas_with_forall fml in
+        Format.printf "AFTER BIND FVS: %s\n" (Formula.str_of fml);
         (* to smt format and solve it with z3 *)
         let solver, ctx = gen_smt_solver timeout_milliseconds in
         let fenv = Map.Poly.empty(*ToDo*)(*PCSP.Problem.fenv_of APCSP.problem*) in
         let dtenv = Set.Poly.empty(*ToDo*)(*Z3Smt.Z3interface.z3_dtenv_of_dtenv ctx (PCSP.Problem.dtenv_of APCSP.problem)*) in
+        Format.printf "Z3_of_formula: %s\n" (Formula.str_of fml);
         let expr = Z3Smt.Z3interface.of_formula ctx [] [] fenv dtenv fml in
         if is_print_for_debug then
           Debug.print @@ lazy (Printf.sprintf "expr: %s" (Z3.Expr.to_string expr));
@@ -625,7 +632,7 @@ module Make (Config: Config.ConfigType) = struct
           if is_print_for_debug then
             Debug.print @@ lazy (Printf.sprintf "Z3 Error: %s" reason);
           Out_channel.flush stderr;
-          false)
+          false *))
 
     let rec replace_to_topbot ~is_print_for_debug fml =
       if Formula.is_binop fml then
@@ -638,7 +645,7 @@ module Make (Config: Config.ConfigType) = struct
         let fml = replace_to_topbot ~is_print_for_debug fml in
         Formula.mk_unop unop fml ~info
       else if Formula.is_atom fml then fml
-      else if Formula.is_bind fml then
+      else if Formula.is_bind fml then begin
         if check_always_true ~is_print_for_debug fml then
           Formula.mk_atom (Atom.mk_true () ~info:Dummy) ~info:Dummy
         else if check_always_true ~is_print_for_debug (Evaluator.simplify_neg fml) then
@@ -647,6 +654,7 @@ module Make (Config: Config.ConfigType) = struct
           let binder, bounds, fml, info = Formula.let_bind fml in
           let fml = replace_to_topbot ~is_print_for_debug fml in
           Formula.mk_bind binder bounds fml ~info
+      end
       else assert false
 
     let optimize ~is_print_for_debug muclp =
@@ -731,6 +739,7 @@ module Make (Config: Config.ConfigType) = struct
 
     let value_of_const_term term =
       let dummy_ht = Hashtbl.Poly.create ~size:seed () in
+      Format.printf "%s" (Term.str_of term);
       match vt_of_term dummy_ht term with
       | Const x -> x
       | _ -> assert false
@@ -899,9 +908,9 @@ module Make (Config: Config.ConfigType) = struct
       muclp
       |> optimize_formula
       |> InlineExtension.optimize
-      |> EraseQuantifiers.optimize
+(*      |> EraseQuantifiers.optimize *)
       |> EraseUnreachedPredicates.optimize
-      |> EraseConstVariables.optimize
+(*      |> EraseConstVariables.optimize *)
       |> CheckAndReplaceToTopOrBot.optimize ~is_print_for_debug
       |> Problem.simplify
       |> InlineExtension.optimize

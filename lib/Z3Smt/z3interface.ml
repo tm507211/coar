@@ -642,7 +642,7 @@ let z3_dtenv_of ?(init=Set.Poly.empty) ctx phi =
 let z3_dt_of (dtenv:dtenv) dt =
   try
     snd @@ Set.Poly.find_exn dtenv ~f:(fun (dt1, _) ->
-        (*print_endline @@ sprintf "%s" (LogicOld.Datatype.full_name_of dt1);*)
+        (* print_endline @@ sprintf "%s" (LogicOld.Datatype.full_name_of dt1); *)
         Stdlib.(LogicOld.Datatype.full_name_of dt = LogicOld.Datatype.full_name_of dt1))
   with _ ->
     failwith @@ sprintf "[Z3interface.z3_dt_of] %s not found" (LogicOld.Datatype.full_name_of dt)
@@ -756,6 +756,15 @@ let rec of_formula ctx
     let env = bounds @ env in
     let sorts = List.map bounds ~f:(fun (_, sort) -> of_sort ctx dtenv sort) in
     let vars = List.map bounds ~f:(fun (var, _) -> of_var ctx var) in
+    let pp_env formatter env =
+      List.iter ~f:(fun (var, sort) ->
+        Format.fprintf formatter " %s:%s"
+          (Ident.name_of_tvar var)
+          (Term.str_of_sort sort)
+      ) env
+    in
+    Format.printf "Phi is binder: %s\n" (Formula.str_of phi);
+    Format.printf "Updated Env:%a\n" pp_env env;
     let body = of_formula ctx env penv fenv dtenv body in
     (match binder with
      | Formula.Forall -> Quantifier.mk_forall ctx sorts vars body None [] [] None None
@@ -776,7 +785,12 @@ and of_var_term ctx env dtenv t =
      (sprintf "z3_of_var_term:%s %s"
      (Ident.name_of_tvar var) (Term.str_of_sort @@ Term.sort_of t)); *)
   match List.findi env ~f:(fun _ (key, _) -> Stdlib.(key = var)) with
-  | Some (i, (_, sort')) ->
+  | Some (i, (k, sort')) ->
+    if not Stdlib.(sort = sort') then begin
+      failwith (sprintf "var %s - %s: %s =?= %s"
+      (Ident.name_of_tvar var) (Ident.name_of_tvar k)
+      (Term.str_of_sort sort) (Term.str_of_sort sort'))
+    end;
     assert Stdlib.(sort = sort');
     (* Debug.print @@ lazy ("mk quantifier"); *)
     let sort = of_sort ctx dtenv sort in

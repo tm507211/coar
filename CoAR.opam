@@ -11,8 +11,9 @@ pin-depends: [
   ["libsvm.0.10.0~modified" "git+https://github.com/hiroshi-unno/libsvm-ocaml.git"]
 ]
 depends: [
-  "ocaml"
-  "core" {>= "0.14.0"}
+  "dune" {= "3.11.1"}
+  "ocaml" {= "5.0.0"}
+  "core" {= "v0.15.1"}
   "core_unix"
   "domainslib"
   "menhir"
@@ -20,7 +21,7 @@ depends: [
   "ocaml-compiler-libs"
   "ocamlgraph"
   "zarith" {>= "1.9"}
-  "z3" {>= "4.8.7"}
+  "z3" {>= "4.11.2"}
   "minisat"
   "libsvm" {= "0.10.0~modified"}
 ]

@@ -7,20 +7,52 @@
 
 ## Installation from source code
 
-* Install opam2.
+* install opam2.
+
+For Ubuntu 20.04 and newer:
+```bash
+sudo apt-get install opam
+```
+
+For Ubuntu 18.04:
+```bash
+sudo add-apt-repository ppa:avsm/ppa
+sudo apt update
+sudo apt install opam
+```
+
+* Initialize and update opam (skip this step if you already had opam2 installed):
+```bash
+opam init
+opam update
+```
+
+* Ensure opam is properly sourced for all terminal sessions. Note: On Ubuntu ignore the message to source `~/.profile` in `~/.bashrc` instead:
+```bash
+eval $(opam env)
+echo 'eval $(opam env)' >> ~/.bashrc # Setup for future bash sessions
+```
+
 * Install ocaml-5.0.0:
   ```bash
-  opam switch create 5.0.0
+  opam switch create 5.0.0 5.0.0
   ```
-* Install dune:
+
+* Install dune v3.11.1:
   ```bash
-  opam install dune
+  opam install dune.3.11.1
   ```
+
+* Ensure that hte following system packages are installed: `libblas-dev`, `liblapack-dev`, `libmpfr-dev`, `libgmp-dev`, `libglpk-dev`, `libffi-dev`, and `pkg-config`:
+```bash
+sudo apt-get install libblas-dev liblapack-dev libmpfr-dev libgmp-dev libglpk-dev libffi-dev pkg-config
+```
+
 * Install required packages:
   ```bash
   opam install . --deps-only
   ```
-  (You may also need to install `libblas-dev`, `liblapack-dev`, `libmpfr-dev`, `libgmp-dev`, `libglpk-dev`, `libffi-dev`, and `pkg-config`)
+
 * Build:
   ```bash
   dune build main.exe
